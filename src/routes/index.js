@@ -4,6 +4,7 @@ import App from "../App";
 import ExplorePgae from "../pages/ExplorePgae";
 import DetailPage from "../pages/DetailPage";
 import SearchPage from "../pages/SearchPage";
+import TrendingPerson from "../pages/TrendingPerson";
 
 const router = createBrowserRouter([
     {
@@ -25,6 +26,10 @@ const router = createBrowserRouter([
             {
                 path: "search",
                 element: <SearchPage/>,
+            },
+            {
+                path: "trending/all/:id",
+                element: <TrendingPerson/>,
             }
         ]
     }

@@ -7,11 +7,16 @@ const Card = ({ data, trending, index, media_type }) => {
     const imgaeURL = useSelector(state => state.movieoData.imageURL)
 
     const mediaType = data.media_type ?? media_type
+
+    const linkTo = mediaType === 'all' 
+        ? `/trending/all/${data.id}` 
+        : `/${mediaType}/${data.id}`;
+
     return (
-        <Link to={"/" + media_type + "/" + data.id} className='w-full min-w-[230px] max-w-[230px] rounded h-80 overflow-hidden block relative hover:scale-105 transition-all duration-300'>
+        <Link to={linkTo} className='w-full min-w-[230px] max-w-[230px] rounded h-80 overflow-hidden block relative hover:scale-105 transition-all duration-300'>
             {
-                data?.poster_path ? (
-                    <img src={imgaeURL + data?.poster_path} alt='' />
+                data?.poster_path || data?.profile_path ? (
+                    <img src={imgaeURL + (data?.poster_path || data?.profile_path)} alt='' />
                 ) : (
                     <div className='bg-neutral-800 w-full h-full flex items-center justify-center'>
                         no image found
@@ -30,12 +35,16 @@ const Card = ({ data, trending, index, media_type }) => {
             <div className='absolute bottom-0 h-16 backdrop-blur-3xl w-full bg-black/60 p-2'>
                 <h2 className='text-ellipsis line-clamp-1 text-lg font-semibold'>{data?.title || data?.name}</h2>
                 <div className='text-sm text-neutral-400 flex justify-between'>
-                    <p>
-                        {moment(data.release_date).format('MMMM Do YYYY')}
-                    </p>
-                    <p className='bg-black px-1 rounded-full text-xs text-neutral-400'>
-                        {Number(data.vote_average).toFixed(1)} <span className='text-sm text-neutral-400'>/ 10</span>
-                    </p>
+                    { mediaType !== 'person' && (
+                        <>
+                            <p>
+                                {moment(data.release_date).format('MMMM Do YYYY')}
+                            </p>
+                            <p className='bg-black px-1 rounded-full text-xs text-neutral-400'>
+                                {Number(data.vote_average).toFixed(1)} <span className='text-sm text-neutral-400'>/ 10</span>
+                            </p>
+                        </>
+                    )}
                 </div>
             </div>
         </Link>
@@ -43,4 +52,3 @@ const Card = ({ data, trending, index, media_type }) => {
 }
 
 export default Card
-

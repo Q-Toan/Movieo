@@ -1,8 +1,8 @@
 import axios from "axios";
 import { useCallback, useEffect, useState } from "react";
 
-const useFetch = (endpoint) => {
-    const [data, setData] = useState([]);
+const useFetchDetails = (endpoint) => {
+    const [data, setData] = useState();
     const [loading, setLoading] = useState(false);
 
     const fetchData = useCallback(async () => {
@@ -10,8 +10,8 @@ const useFetch = (endpoint) => {
             setLoading(true);
             const response = await axios.get(endpoint)
             setLoading(false);
-            setData(response.data.results)
-        }catch (error) {
+            setData(response.data)
+        } catch (error) {
             console.error("Error fetching data:", error);
         }
     }, [endpoint])
@@ -20,7 +20,7 @@ const useFetch = (endpoint) => {
         fetchData();
     }, [fetchData]);
 
-    return {data , loading}
+    return { data, loading }
 }
 
-export default useFetch;
+export default useFetchDetails;

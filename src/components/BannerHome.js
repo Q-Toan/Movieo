@@ -8,34 +8,34 @@ const BannerHome = () => {
     const [currentImage, setCurrentImage] = useState(0)
 
     const handleNext = () => {
-    if (currentImage < bannerData.length - 1) {
-        setCurrentImage(prev => prev + 1)
-    } else {
-        setCurrentImage(0)
+        if (currentImage < bannerData.length - 1) {
+            setCurrentImage(prev => prev + 1)
+        } else {
+            setCurrentImage(0)
+        }
     }
-}
 
     const handlePrev = () => {
-    if (currentImage > 0) {
-        setCurrentImage(prev => prev - 1)
-    } else {
-        setCurrentImage(bannerData.length - 1)
+        if (currentImage > 0) {
+            setCurrentImage(prev => prev - 1)
+        } else {
+            setCurrentImage(bannerData.length - 1)
+        }
     }
-}
 
     useEffect(() => {
-    const interval = setInterval(() => {
-        setCurrentImage(prev => {
-            if (prev < bannerData.length - 1) {
-                return prev + 1
-            } else {
-                return 0
-            }
-        })
-    }, 5000)
+        const interval = setInterval(() => {
+            setCurrentImage(prev => {
+                if (prev < bannerData.length - 1) {
+                    return prev + 1
+                } else {
+                    return 0
+                }
+            })
+        }, 5000)
 
-    return () => clearInterval(interval)
-}, [bannerData])
+        return () => clearInterval(interval)
+    }, [bannerData])
 
     return (
         <section className='w-full h- full'>
@@ -43,9 +43,9 @@ const BannerHome = () => {
                 {
                     bannerData.map((data, index) => {
                         return (
-                            <div key={data.id+"bannerHome"+index} className='min-w-full min-h-[450px] overflow-hidden lg:min-h-full relative group transition-all ' style={{transform : `translateX(-${currentImage * 100}%)`}}>
+                            <div key={data.id + "bannerHome" + index} className='min-w-full min-h-[450px] overflow-hidden lg:min-h-full relative group transition-all ' style={{ transform: `translateX(-${currentImage * 100}%)` }}>
                                 <div className='w-full h-full'>
-                                    <img className='h-full w-full object-cover' alt='' src={imageURL + data.backdrop_path} />
+                                    <img className='h-full w-full object-cover' alt='' src={(imageURL + data.backdrop_path) || ""} />
                                 </div>
                                 {/*** button next and previous image */}
                                 <div className='absolute top-0 w-full h-full hidden items-center justify-between group-hover:lg:flex px-4'>
