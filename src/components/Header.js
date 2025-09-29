@@ -1,6 +1,5 @@
 import {useEffect, useState } from 'react';
 import logo from '../assets/logo.png';
-import usericon from '../assets/user.png';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { IoSearchOutline } from "react-icons/io5";
 import { navigation } from '../contants/navigation';
@@ -16,7 +15,7 @@ const Header = () => {
         if(searchInput) {
             navigate(`/search?q=${searchInput}`);
         }
-    }, [searchInput]);
+    }, [searchInput, navigate]);
 
     const HandleSubmit = (e) => {
         e.preventDefault();
@@ -56,13 +55,6 @@ const Header = () => {
                     <button className='text-2xl text-white'>
                         <IoSearchOutline/>
                     </button>
-                    <div className='w-8 h-8 rounded-full overflow-hidden cursor-pointer active:scale-50 transition-all duration-200'>
-                        <img 
-                            src = {usericon}
-                            alt='User Icon'
-                            width='w-full h-full'
-                        />
-                    </div>
                 </div>
             </div>
         </header>
