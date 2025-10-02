@@ -5,6 +5,10 @@ import ExplorePgae from "../pages/ExplorePgae";
 import DetailPage from "../pages/DetailPage";
 import SearchPage from "../pages/SearchPage";
 import TrendingPerson from "../pages/TrendingPerson";
+import LoginPage from "../pages/LoginPage";
+import SignUpPage from "../pages/SignUpPage";
+import WatchlistPage from "../pages/WatchlistPage";
+import ProtectedRoute from "../components/ProtectedRoute";
 
 const router = createBrowserRouter([
     {
@@ -30,8 +34,20 @@ const router = createBrowserRouter([
             {
                 path: "trending/all/:id",
                 element: <TrendingPerson/>,
+            },
+            {
+                path: "watchlist",
+                element: <ProtectedRoute><WatchlistPage /></ProtectedRoute>
             }
         ]
+    },
+    {
+        path: "/login",
+        element: <LoginPage />
+    },
+    {
+        path: "/signup",
+        element: <SignUpPage />
     }
 ]);
 

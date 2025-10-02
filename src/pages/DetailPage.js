@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import useFetchDetails from '../hooks/useFetchDetails';
 import { useSelector } from 'react-redux';
@@ -6,17 +6,53 @@ import moment from 'moment/moment';
 import Divider from '../components/Divider';
 import useFetch from '../hooks/useFetch';
 import HorizonSrollCard from '../components/HorizonSrollCard';
-
+import axios from 'axios';
+import { API_KEY } from '../contants/api';
 
 const DetailPage = () => {
     const params = useParams();
-    const imageURL = useSelector(state => state.movieoData.imageURL)
+    const imageURL = useSelector(state => state.movieoData.imageURL);
+    const { isAuthenticated, sessionId, user } = useSelector(state => state.user);
     const { data } = useFetchDetails(`/${params?.explore}/${params?.id}`);
-    const { data: castData } = useFetchDetails(`/${params?.explore}/${params?.id}/credits`)
-    const { data: similarData } = useFetch(`/${params?.explore}/${params?.id}/similar`)
-    const { data: Recommendations } = useFetch(`/${params?.explore}/${params?.id}/recommendations`)
-    const trendingData = useSelector(state => state.movieoData.bannerData)
+    const { data: castData } = useFetchDetails(`/${params?.explore}/${params?.id}/credits`);
+    const { data: similarData } = useFetch(`/${params?.explore}/${params?.id}/similar`);
+    const { data: Recommendations } = useFetch(`/${params?.explore}/${params?.id}/recommendations`);
+    const trendingData = useSelector(state => state.movieoData.bannerData);
     const [visibleCast, setVisibleCast] = useState(10);
+    const [isInWatchlist, setIsInWatchlist] = useState(false);
+
+    useEffect(() => {
+        const checkWatchlist = async () => {
+            if (isAuthenticated && sessionId && params.id) {
+                try {
+                    const response = await axios.get(`/movie/${params.id}/account_states?api_key=${API_KEY}&session_id=${sessionId}`);
+                    setIsInWatchlist(response.data.watchlist);
+                } catch (error) {
+                    console.error('Error checking watchlist status', error);
+                }
+            }
+        };
+
+        checkWatchlist();
+    }, [isAuthenticated, sessionId, params.id]);
+
+    const handleAddToWatchlist = async () => {
+        if (!isAuthenticated || !user) {
+            // Optionally, redirect to login or show a message
+            return;
+        }
+
+        try {
+            await axios.post(`/account/${user.id}/watchlist?api_key=${API_KEY}&session_id=${sessionId}`, {
+                media_type: 'movie',
+                media_id: params.id,
+                watchlist: true,
+            });
+            setIsInWatchlist(true);
+        } catch (error) {
+            console.error('Error adding to watchlist', error);
+        }
+    };
 
     const handleShowMore = () => {
         setVisibleCast(prev => prev + 10);
@@ -26,8 +62,8 @@ const DetailPage = () => {
         setVisibleCast(10);
     };
 
-    const datamock = data || {}
-    const duration = (Number(datamock.runtime) / 60).toFixed(1).split('.')
+    const datamock = data || {};
+    const duration = (Number(datamock.runtime) / 60).toFixed(1).split('.');
 
     return (
         <div className='bg-neutral-900 text-white min-h-screen'>
@@ -39,7 +75,7 @@ const DetailPage = () => {
                 />
                 <div className='absolute inset-0 bg-gradient-to-t from-neutral-900 to-transparent'></div>
             </div>
-            <div className='container mx-auto px-4 py-8 lg:py-0 lg:flex lg:gap-10'>
+            <div className='container mx-auto px-4 py-16 lg:py-0 lg:flex lg:gap-10'>
                 <div className='lg:-mt-36 relative z-10 mx-auto lg:mx-0 w-60'>
                     <img
                         src={imageURL + datamock.poster_path}
@@ -68,6 +104,19 @@ const DetailPage = () => {
                             Duration: <span className='font-semibold text-white'>{duration[0]}h {duration[1]}m</span>
                         </p>
                     </div>
+                    {isAuthenticated && (
+                        <div className="my-4">
+                            {isInWatchlist ? (
+                                <button className='bg-gray-500 text-white font-bold py-2 px-4 rounded cursor-not-allowed' disabled>
+                                    In Watchlist
+                                </button>
+                            ) : (
+                                <button onClick={handleAddToWatchlist} className='bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded'>
+                                    Add to Watchlist
+                                </button>
+                            )}
+                        </div>
+                    )}
                     <Divider />
                     <div>
                         <h3 className='text-2xl font-bold mb-2'>Overview</h3>
