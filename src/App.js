@@ -5,11 +5,14 @@ import Header from './components/Header';
 import Footer from './components/Footer';
 import MobileNavigation from './components/MobileNavigation';
 import { useCallback, useEffect } from 'react';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { setBannerData , setImageURL} from './store/movieoSlice';
+import Toast from './components/Toast';
+import { hideToast } from './store/toastSlice';
 
 function App() {
   const dispatch = useDispatch();
+  const { isVisible, message, type } = useSelector(state => state.toast);
 
   const fetchTrendingData = useCallback(async () => {
     try {
@@ -44,6 +47,11 @@ function App() {
         </div>
       <Footer />
       <MobileNavigation />
+      {isVisible && (
+        <div className="fixed top-5 right-5 z-50">
+          <Toast message={message} type={type} onClose={() => dispatch(hideToast())} />
+        </div>
+      )}
     </main>
   );
 }

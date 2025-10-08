@@ -1,20 +1,32 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { API_KEY } from '../contants/api';
 import { useDispatch } from 'react-redux';
 import { setSessionId, setUser } from '../store/userSlice';
+import { showToast } from '../store/toastSlice';
 import { motion } from 'framer-motion';
 import { ClipLoader } from 'react-spinners';
 import { Lock, Mail } from 'lucide-react';
 
 const LoginPage = () => {
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
+    const [email, setEmail] = useState('luquoctoan');
+    const [password, setPassword] = useState('3522601399');
+    const [rememberMe, setRememberMe] = useState(false);
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
     const dispatch = useDispatch();
+
+    useEffect(() => {
+        const savedEmail = localStorage.getItem('rememberedEmail');
+        const savedPassword = localStorage.getItem('rememberedPassword');
+        if (savedEmail && savedPassword) {
+            setEmail(savedEmail);
+            setPassword(savedPassword);
+            setRememberMe(true);
+        }
+    }, []);
 
     const handleLogin = async (e) => {
         e.preventDefault();
@@ -37,10 +49,20 @@ const LoginPage = () => {
             const { data: accountDetails } = await axios.get(`/account?api_key=${API_KEY}&session_id=${session_id}`);
             dispatch(setUser(accountDetails));
 
+            if (rememberMe) {
+                localStorage.setItem('rememberedEmail', email);
+                localStorage.setItem('rememberedPassword', password);
+            } else {
+                localStorage.removeItem('rememberedEmail');
+                localStorage.removeItem('rememberedPassword');
+            }
+
+            dispatch(showToast({ message: "Login successful!", type: "success" }));
             navigate('/');
         } catch (err) {
             console.error(err);
             setError('Failed to login. Please check your credentials.');
+            dispatch(showToast({ message: "Failed to login. Please check your credentials.", type: "error" }));
         } finally {
             setLoading(false);
         }
@@ -112,6 +134,22 @@ const LoginPage = () => {
                             />
                         </div>
                     </motion.div>
+
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center">
+                            <input
+                                id="remember-me"
+                                name="remember-me"
+                                type="checkbox"
+                                checked={rememberMe}
+                                onChange={(e) => setRememberMe(e.target.checked)}
+                                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                            />
+                            <label htmlFor="remember-me" className="ml-2 block text-sm text-neutral-400">
+                                Remember me
+                            </label>
+                        </div>
+                    </div>
 
                     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
                         <button

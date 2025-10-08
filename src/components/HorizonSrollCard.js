@@ -12,7 +12,6 @@ const HorizonSrollCard = ({ data = [], heading, trending, media_type }) => {
         const scrollAmount = container.offsetWidth;
         const maxScrollLeft = container.scrollWidth - container.offsetWidth;
         if (container.scrollLeft + scrollAmount >= maxScrollLeft) {
-            // Nếu đã cuộn tới cuối → quay về đầu
             container.scrollTo({ left: 0, behavior: 'smooth' });
         } else {
             container.scrollBy({ left: scrollAmount, behavior: 'smooth' });

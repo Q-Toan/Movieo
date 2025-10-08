@@ -1,15 +1,19 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import useFetchDetails from '../hooks/useFetchDetails';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import moment from 'moment/moment';
 import Divider from '../components/Divider';
 import useFetch from '../hooks/useFetch';
 import HorizonSrollCard from '../components/HorizonSrollCard';
 import axios from 'axios';
 import { API_KEY } from '../contants/api';
+import { addToWatchlist, removeFromWatchlist } from '../store/watchlistSlice';
+
+import AlertDialog from '../components/AlertDialog';
 
 const DetailPage = () => {
+    const dispatch = useDispatch();
     const params = useParams();
     const imageURL = useSelector(state => state.movieoData.imageURL);
     const { isAuthenticated, sessionId, user } = useSelector(state => state.user);
@@ -20,12 +24,13 @@ const DetailPage = () => {
     const trendingData = useSelector(state => state.movieoData.bannerData);
     const [visibleCast, setVisibleCast] = useState(10);
     const [isInWatchlist, setIsInWatchlist] = useState(false);
+    const [isAlertOpen, setIsAlertOpen] = useState(false);
 
     useEffect(() => {
         const checkWatchlist = async () => {
             if (isAuthenticated && sessionId && params.id) {
                 try {
-                    const response = await axios.get(`/movie/${params.id}/account_states?api_key=${API_KEY}&session_id=${sessionId}`);
+                    const response = await axios.get(`/${params.explore}/${params.id}/account_states?api_key=${API_KEY}&session_id=${sessionId}`);
                     setIsInWatchlist(response.data.watchlist);
                 } catch (error) {
                     console.error('Error checking watchlist status', error);
@@ -34,24 +39,29 @@ const DetailPage = () => {
         };
 
         checkWatchlist();
-    }, [isAuthenticated, sessionId, params.id]);
+    }, [isAuthenticated, sessionId, params.id, params.explore]);
 
-    const handleAddToWatchlist = async () => {
-        if (!isAuthenticated || !user) {
-            // Optionally, redirect to login or show a message
-            return;
-        }
-
-        try {
-            await axios.post(`/account/${user.id}/watchlist?api_key=${API_KEY}&session_id=${sessionId}`, {
-                media_type: 'movie',
-                media_id: params.id,
-                watchlist: true,
-            });
+    const handleAddToWatchlist = () => {
+        if (isAuthenticated && user) {
+            dispatch(addToWatchlist({ sessionId, accountId: user.id, mediaType: params.explore, mediaId: params.id }));
             setIsInWatchlist(true);
-        } catch (error) {
-            console.error('Error adding to watchlist', error);
         }
+    };
+
+    const handleRemoveFromWatchlist = () => {
+        if (isAuthenticated && user) {
+            dispatch(removeFromWatchlist({ sessionId, accountId: user.id, mediaType: params.explore, mediaId: params.id }));
+            setIsInWatchlist(false);
+        }
+    };
+
+    const handleRemoveClick = () => {
+        setIsAlertOpen(true);
+    };
+
+    const handleConfirmRemove = () => {
+        handleRemoveFromWatchlist();
+        setIsAlertOpen(false);
     };
 
     const handleShowMore = () => {
@@ -107,8 +117,8 @@ const DetailPage = () => {
                     {isAuthenticated && (
                         <div className="my-4">
                             {isInWatchlist ? (
-                                <button className='bg-gray-500 text-white font-bold py-2 px-4 rounded cursor-not-allowed' disabled>
-                                    In Watchlist
+                                <button onClick={handleRemoveClick} className='bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded'>
+                                    Remove from Watchlist
                                 </button>
                             ) : (
                                 <button onClick={handleAddToWatchlist} className='bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded'>
@@ -164,8 +174,15 @@ const DetailPage = () => {
                 <HorizonSrollCard data={Recommendations} heading={"Recommendations " + params?.explore} media_type={params?.explore} />
                 <HorizonSrollCard data={trendingData} heading={"Trending " + params?.explore} media_type={params?.explore} />
             </div>
+            <AlertDialog
+                isOpen={isAlertOpen}
+                onClose={() => setIsAlertOpen(false)}
+                onConfirm={handleConfirmRemove}
+                title="Are you sure?"
+                description={`Do you really want to remove ${datamock?.title || datamock?.name} from your watchlist?`}
+            />
         </div>
     );
-}
+};
 
 export default DetailPage;
