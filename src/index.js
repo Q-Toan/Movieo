@@ -1,7 +1,6 @@
 import axios from 'axios';
 import ReactDOM from 'react-dom/client';
 import './index.css';
-import reportWebVitals from './reportWebVitals';
 import { RouterProvider } from 'react-router-dom';
 import router from './routes';
 import { store } from '../src/store/store'
@@ -19,4 +18,3 @@ root.render(
   // </React.StrictMode>
 );
 
-reportWebVitals();
