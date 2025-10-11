@@ -18,13 +18,13 @@ const AlertDialog = ({ isOpen, onClose, onConfirm, title, description }) => {
                         <div className="flex justify-end gap-4">
                             <button
                                 onClick={onClose}
-                                className="px-6 py-2 bg-neutral-700 text-white rounded-lg hover:bg-neutral-600 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-neutral-500"
+                                className="bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-6 rounded"
                             >
                                 Cancel
                             </button>
                             <button
                                 onClick={onConfirm}
-                                className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-red-500"
+                                className="bg-transparent border border-destructive text-destructive hover:bg-destructive hover:text-white font-bold py-2 px-4 rounded shadow-lg shadow-destructive/50"
                             >
                                 Continue
                             </button>

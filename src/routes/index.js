@@ -7,7 +7,7 @@ import SearchPage from "../pages/SearchPage";
 import TrendingPerson from "../pages/TrendingPerson";
 import LoginPage from "../pages/LoginPage";
 import SignUpPage from "../pages/SignUpPage";
-import WatchlistPage from "../pages/WatchlistPage";
+import ProfilePage from "../pages/ProfilePage";
 import ProtectedRoute from "../components/ProtectedRoute";
 
 const router = createBrowserRouter([
@@ -36,8 +36,8 @@ const router = createBrowserRouter([
                 element: <TrendingPerson/>,
             },
             {
-                path: "watchlist",
-                element: <ProtectedRoute><WatchlistPage /></ProtectedRoute>
+                path: "profile",
+                element: <ProtectedRoute><ProfilePage /></ProtectedRoute>
             }
         ]
     },

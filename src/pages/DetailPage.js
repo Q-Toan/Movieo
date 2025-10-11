@@ -9,8 +9,13 @@ import HorizonSrollCard from '../components/HorizonSrollCard';
 import axios from 'axios';
 import { API_KEY } from '../contants/api';
 import { addToWatchlist, removeFromWatchlist } from '../store/watchlistSlice';
+import { addToFavorites, removeFromFavorites } from '../store/favoriteSlice';
 
+import useFetchEpisodeVideos from '../hooks/useFetchEpisodeVideos';
 import AlertDialog from '../components/AlertDialog';
+
+import { submitRating } from '../store/ratingSlice';
+import Rating from '../components/Rating';
 
 const DetailPage = () => {
     const dispatch = useDispatch();
@@ -25,20 +30,28 @@ const DetailPage = () => {
     const [visibleCast, setVisibleCast] = useState(10);
     const [isInWatchlist, setIsInWatchlist] = useState(false);
     const [isAlertOpen, setIsAlertOpen] = useState(false);
+    const [userRating, setUserRating] = useState(0);
+    const [isInFavorites, setIsInFavorites] = useState(false);
+    const [listTypeToRemove, setListTypeToRemove] = useState(null);
+    const [itemToRemove, setItemToRemove] = useState(null);
 
     useEffect(() => {
-        const checkWatchlist = async () => {
+        const checkAccountStates = async () => {
             if (isAuthenticated && sessionId && params.id) {
                 try {
                     const response = await axios.get(`/${params.explore}/${params.id}/account_states?api_key=${API_KEY}&session_id=${sessionId}`);
                     setIsInWatchlist(response.data.watchlist);
+                    setIsInFavorites(response.data.favorite);
+                    if (response.data.rated) {
+                        setUserRating(response.data.rated.value);
+                    }
                 } catch (error) {
-                    console.error('Error checking watchlist status', error);
+                    console.error('Error checking account states', error);
                 }
             }
         };
 
-        checkWatchlist();
+        checkAccountStates();
     }, [isAuthenticated, sessionId, params.id, params.explore]);
 
     const handleAddToWatchlist = () => {
@@ -55,13 +68,37 @@ const DetailPage = () => {
         }
     };
 
-    const handleRemoveClick = () => {
+    const handleAddToFavorites = () => {
+        if (isAuthenticated && user) {
+            dispatch(addToFavorites({ sessionId, accountId: user.id, mediaType: params.explore, mediaId: params.id }));
+            setIsInFavorites(true);
+        }
+    };
+
+    const handleRemoveFromFavorites = () => {
+        if (isAuthenticated && user) {
+            dispatch(removeFromFavorites({ sessionId, accountId: user.id, mediaType: params.explore, mediaId: params.id }));
+            setIsInFavorites(false);
+        }
+    };
+
+    const handleRemoveClick = (item, listType) => {
+        setItemToRemove(item);
+        setListTypeToRemove(listType);
         setIsAlertOpen(true);
     };
 
     const handleConfirmRemove = () => {
-        handleRemoveFromWatchlist();
+        if (itemToRemove && listTypeToRemove) {
+            if (listTypeToRemove === 'watchlist') {
+                handleRemoveFromWatchlist();
+            } else if (listTypeToRemove === 'favorites') {
+                handleRemoveFromFavorites();
+            }
+        }
         setIsAlertOpen(false);
+        setItemToRemove(null);
+        setListTypeToRemove(null);
     };
 
     const handleShowMore = () => {
@@ -72,8 +109,45 @@ const DetailPage = () => {
         setVisibleCast(10);
     };
 
+    const handleSeasonChange = (e) => {
+        setSelectedSeason(Number(e.target.value));
+        setSelectedEpisode(1); // Reset episode to 1 when season changes
+    };
+
+    const handleEpisodeChange = (e) => {
+        setSelectedEpisode(Number(e.target.value));
+    };
+
+    const handleRatingSubmit = (rating) => {
+        if (isAuthenticated && user) {
+            dispatch(submitRating({ sessionId, mediaType: params.explore, mediaId: params.id, rating }));
+        }
+    };
+
     const datamock = data || {};
-    const duration = (Number(datamock.runtime) / 60).toFixed(1).split('.');
+    let durationString = '';
+
+    if (params.explore === 'tv') {
+        if (datamock.number_of_episodes) {
+            durationString = `${datamock.number_of_episodes} episodes`;
+        }
+    } else {
+        if (datamock.runtime) {
+            const hours = Math.floor(datamock.runtime / 60);
+            const minutes = datamock.runtime % 60;
+            durationString = `${hours}h ${minutes}m`;
+        }
+    }
+
+    const { data: episodeVideos, loading: episodeVideosLoading, fetchVideos } = useFetchEpisodeVideos();
+    const [selectedSeason, setSelectedSeason] = useState(datamock?.seasons?.length > 0 ? datamock.seasons[0].season_number : null);
+    const [selectedEpisode, setSelectedEpisode] = useState(1);
+
+    useEffect(() => {
+        if (params.explore === 'tv' && selectedSeason !== null) {
+            fetchVideos(params.id, selectedSeason, selectedEpisode);
+        }
+    }, [params.id, selectedSeason, selectedEpisode, fetchVideos, params.explore]);
 
     return (
         <div className='bg-neutral-900 text-white min-h-screen'>
@@ -111,20 +185,34 @@ const DetailPage = () => {
                         </p>
                         <span className='hidden sm:block'>|</span>
                         <p>
-                            Duration: <span className='font-semibold text-white'>{duration[0]}h {duration[1]}m</span>
+                            Duration: <span className='font-semibold text-white'>{durationString}</span>
                         </p>
                     </div>
                     {isAuthenticated && (
-                        <div className="my-4">
+                        <div className="my-4 flex items-center gap-4">
                             {isInWatchlist ? (
-                                <button onClick={handleRemoveClick} className='bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded'>
+                                <button onClick={() => handleRemoveClick(datamock, 'watchlist')} className='bg-transparent border border-destructive text-destructive hover:bg-destructive hover:text-white font-bold py-2 px-4 rounded shadow-lg shadow-destructive/50'>
                                     Remove from Watchlist
                                 </button>
                             ) : (
-                                <button onClick={handleAddToWatchlist} className='bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded'>
+                                <button onClick={handleAddToWatchlist} className='bg-primary hover:bg-primary-hover text-white font-bold py-2 px-4 rounded shadow-lg shadow-primary/50 ring-2 ring-primary/50'>
                                     Add to Watchlist
                                 </button>
                             )}
+                            {isInFavorites ? (
+                                <button onClick={() => handleRemoveClick(datamock, 'favorites')} className='bg-transparent border border-destructive text-destructive hover:bg-destructive hover:text-white font-bold py-2 px-4 rounded shadow-lg shadow-destructive/50'>
+                                    Remove from Favorites
+                                </button>
+                            ) : (
+                                <button onClick={handleAddToFavorites} className='bg-amber-500 hover:bg-amber-600 text-white font-bold py-2 px-4 rounded shadow-lg shadow-amber-500/50 ring-2 ring-amber-500/50'>
+                                    Add to Favorites
+                                </button>
+                            )}
+                        </div>
+                    )}
+                    {isAuthenticated && (
+                        <div className='mt-4'>
+                            <Rating onRatingSubmit={handleRatingSubmit} initialRating={userRating} />
                         </div>
                     )}
                     <Divider />
@@ -169,6 +257,64 @@ const DetailPage = () => {
                     </div>
                 </div>
             </div>
+
+            {
+                params.explore === 'tv' && (
+                    <div className='container mx-auto px-4 mt-10'>
+                        <h2 className='text-2xl font-bold mb-4'>Seasons & Episodes</h2>
+                        <div className='flex gap-4 items-center mb-4'>
+                            <div>
+                                <label htmlFor='season-select' className='mr-2 font-semibold'>Season:</label>
+                                <select id='season-select' value={selectedSeason || ''} onChange={handleSeasonChange} className='bg-neutral-800 text-white p-2 rounded'>
+                                    {datamock?.seasons?.map(season => (
+                                        <option key={season.id} value={season.season_number}>
+                                            {season.name}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div>
+                                <label htmlFor='episode-select' className='mr-2 font-semibold'>Episode:</label>
+                                <select id='episode-select' value={selectedEpisode} onChange={handleEpisodeChange} className='bg-neutral-800 text-white p-2 rounded'>
+                                    {
+                                        selectedSeason !== null && datamock?.seasons?.find(s => s.season_number === selectedSeason)?.episode_count &&
+                                        Array.from({ length: datamock.seasons.find(s => s.season_number === selectedSeason).episode_count }, (_, i) => i + 1).map(episodeNum => (
+                                            <option key={episodeNum} value={episodeNum}>
+                                                Episode {episodeNum}
+                                            </option>
+                                        ))
+                                    }
+                                </select>
+                            </div>
+                        </div>
+
+                        {episodeVideosLoading ? (
+                            <div>Loading episode videos...</div>
+                        ) : (
+                            <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
+                                {episodeVideos.map(video => (
+                                    <div key={video.id} className='bg-neutral-800 rounded-lg overflow-hidden shadow-lg'>
+                                        <div className='aspect-w-16 aspect-h-9'>
+                                            <iframe
+                                                src={`https://www.youtube.com/embed/${video.key}`}
+                                                title={video.name}
+                                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                                allowFullScreen
+                                                className='w-full h-full'
+                                            ></iframe>
+                                        </div>
+                                        <div className='p-4'>
+                                            <h3 className='text-lg font-bold'>{video.name}</h3>
+                                            <p className='text-neutral-400'>{video.type}</p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                )
+            }
+
             <div className='container mx-auto px-4 mt-10'>
                 <HorizonSrollCard data={similarData} heading={"Similar " + params?.explore} media_type={params?.explore} />
                 <HorizonSrollCard data={Recommendations} heading={"Recommendations " + params?.explore} media_type={params?.explore} />

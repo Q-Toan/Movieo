@@ -1,4 +1,4 @@
-import {useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import logo from '../assets/logo.png';
 import userIcon from '../assets/user.png';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
@@ -6,6 +6,7 @@ import { IoSearchOutline } from "react-icons/io5";
 import { navigation } from '../contants/navigation';
 import { useSelector, useDispatch } from 'react-redux';
 import { logout } from '../store/userSlice';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const Header = () => {
     const location = useLocation();
@@ -14,9 +15,8 @@ const Header = () => {
     const navigate = useNavigate();
     const { isAuthenticated, user } = useSelector(state => state.user);
     const dispatch = useDispatch();
-
-    console.log(user);
-    
+    const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const menuRef = useRef(null);
 
     useEffect(() => {
         if(searchInput) {
@@ -24,13 +24,34 @@ const Header = () => {
         }
     }, [searchInput, navigate]);
 
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (menuRef.current && !menuRef.current.contains(event.target)) {
+                setIsMenuOpen(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [menuRef]);
+
+    useEffect(() => {
+        setIsMenuOpen(false);
+    }, [location]);
+
     const HandleSubmit = (e) => {
         e.preventDefault();
     }
 
     const handleLogout = () => {
         dispatch(logout());
-        navigate('/');
+        if (location.pathname === '/profile') {
+            navigate('/login');
+        } else {
+            navigate('/');
+        }
     }
 
     return (
@@ -53,11 +74,6 @@ const Header = () => {
                             )
                         })
                     }
-                    {isAuthenticated && (
-                        <NavLink to="/watchlist" className={({isActive}) =>`px-2 hover:text-neutral-100 ${isActive && "text-neutral-100"}`}>
-                            Watchlist
-                        </NavLink>
-                    )}
                 </nav>
                 <div className='ml-auto flex items-center gap-4'>
                     <form className='flex items-center gap-2' onSubmit={HandleSubmit}>
@@ -72,24 +88,34 @@ const Header = () => {
                     <button className='text-2xl text-white mobile:hidden lg:block'>
                         <IoSearchOutline/>
                     </button>
-                    {isAuthenticated ? (
-                        <div className="flex items-center gap-4">
-                            <div className='w-10 h-10 rounded-full overflow-hidden cursor-pointer active:scale-50 transition-all'>
-                                <img src={`https://www.gravatar.com/avatar/${user?.avatar?.gravatar?.hash}`} alt='user' className='w-full h-full'/>
-                            </div>
-                            <button onClick={handleLogout} className="text-white">Logout</button>
-                        </div>
-                    ) : (
-                        <Link to={'/login'}>
-                            <div className='w-10 h-10 rounded-full overflow-hidden cursor-pointer active:scale-50 transition-all'>
-                                <img src={userIcon} alt='user' className='w-full h-full'/>
-                            </div>
-                        </Link>
-                    )}
+                    <div className="relative" ref={menuRef}>
+                        <button onClick={() => setIsMenuOpen(!isMenuOpen)} className={`w-10 h-10 rounded-full overflow-hidden cursor-pointer transition-all transform hover:scale-110 ${isMenuOpen ? 'ring-2 ring-primary' : ''}`}>
+                            <img src={isAuthenticated ? `https://www.gravatar.com/avatar/${user?.avatar?.gravatar?.hash}` : userIcon} alt='user' className='w-full h-full'/>
+                        </button>
+                        <AnimatePresence>
+                            {isMenuOpen && (
+                                <motion.div 
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: 20 }}
+                                    transition={{ duration: 0.2 }}
+                                    className="absolute top-14 right-0 bg-neutral-800 w-48 rounded-lg shadow-lg py-2">
+                                    {isAuthenticated ? (
+                                        <>
+                                            <Link to={'/profile'} className="block px-4 py-2 rounded-md text-white hover:bg-primary-hover">Profile</Link>
+                                            <button onClick={handleLogout} className="w-full text-left px-4 py-2 rounded-md text-destructive hover:bg-destructive hover:text-white">Logout</button>
+                                        </>
+                                    ) : (
+                                        <Link to={'/login'} className="block px-4 py-2 mx-1 rounded-md text-white hover:bg-primary-hover">Login</Link>
+                                    )}
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </div>
                 </div>
             </div>
         </header>
     )
 }
 
-export default Header
+export default Header;
