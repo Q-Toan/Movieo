@@ -1,5 +1,7 @@
 import axios from 'axios';
 import { Outlet } from 'react-router-dom';
+import { Suspense } from 'react';
+import { PulseLoader } from 'react-spinners';
 import './App.css';
 import Header from './components/Header';
 import Footer from './components/Footer';
@@ -43,7 +45,13 @@ function App() {
     <main className='pb-14 lg:pb-0'>
       <Header />
         <div className='min-h-[90vh]'>
-          <Outlet />
+          <Suspense fallback={
+            <div className="w-full h-full flex justify-center items-center">
+              <PulseLoader color={"#E50914"} />
+            </div>
+          }>
+            <Outlet />
+          </Suspense>
         </div>
       <Footer />
       <MobileNavigation />

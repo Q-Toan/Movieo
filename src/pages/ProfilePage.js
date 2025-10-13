@@ -1,21 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { logout } from '../store/userSlice';
-import { useNavigate } from 'react-router-dom';
 import { fetchWatchlist, removeFromWatchlist } from '../store/watchlistSlice';
 import { fetchFavorites, removeFromFavorites } from '../store/favoriteSlice';
 import moment from 'moment';
-import Card from '../components/Card';
 import AlertDialog from '../components/AlertDialog';
-
 import { FaRegSmile } from 'react-icons/fa';
+import Breadcrumb from '../components/Breadcrumb';
 
 const ProfilePage = () => {
     const { user, sessionId } = useSelector(state => state.user);
     const { items: watchlistItems, loading: watchlistLoading } = useSelector(state => state.watchlist);
     const { items: favoriteItems, loading: favoritesLoading } = useSelector(state => state.favorites);
     const dispatch = useDispatch();
-    const navigate = useNavigate();
     const [isAlertOpen, setIsAlertOpen] = useState(false);
     const [itemToRemove, setItemToRemove] = useState(null);
     const [listTypeToRemove, setListTypeToRemove] = useState(null);
@@ -29,11 +25,6 @@ const ProfilePage = () => {
             dispatch(fetchFavorites({ sessionId, accountId: user.id }));
         }
     }, [user, sessionId, dispatch]);
-
-    const handleLogout = () => {
-        dispatch(logout());
-        navigate('/login');
-    };
 
     const handleRemoveClick = (item, listType) => {
         setItemToRemove(item);
@@ -54,9 +45,15 @@ const ProfilePage = () => {
         setListTypeToRemove(null);
     };
 
+    const crumbs = [
+        { label: 'Home', path: '/' },
+        { label: 'Profile' }
+    ];
+
     return (
         <div className='bg-neutral-900 text-white min-h-screen mobile:p-8 lg:p-20'>
             <div className='container mx-auto'>
+                <Breadcrumb crumbs={crumbs} />
                 <div className="flex items-center gap-4 mb-8 border-b border-neutral-700">
                     <button
                         onClick={() => setActiveTab('watchlist')}

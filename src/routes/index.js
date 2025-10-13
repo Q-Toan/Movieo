@@ -1,14 +1,17 @@
 import { createBrowserRouter } from "react-router-dom";
-import Home from "../pages/Home";
+import { lazy } from 'react';
 import App from "../App";
-import ExplorePgae from "../pages/ExplorePgae";
-import DetailPage from "../pages/DetailPage";
-import SearchPage from "../pages/SearchPage";
-import TrendingPerson from "../pages/TrendingPerson";
-import LoginPage from "../pages/LoginPage";
-import SignUpPage from "../pages/SignUpPage";
-import ProfilePage from "../pages/ProfilePage";
 import ProtectedRoute from "../components/ProtectedRoute";
+
+// Lazy load page components for code splitting
+const Home = lazy(() => import("../pages/Home"));
+const ExplorePgae = lazy(() => import("../pages/ExplorePgae"));
+const DetailPage = lazy(() => import("../pages/DetailPage"));
+const SearchPage = lazy(() => import("../pages/SearchPage"));
+const TrendingPerson = lazy(() => import("../pages/TrendingPerson"));
+const LoginPage = lazy(() => import("../pages/LoginPage"));
+const SignUpPage = lazy(() => import("../pages/SignUpPage"));
+const ProfilePage = lazy(() => import("../pages/ProfilePage"));
 
 const router = createBrowserRouter([
     {
